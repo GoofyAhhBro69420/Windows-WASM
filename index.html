@@ -18,8 +18,12 @@
 <body>
   <div id="dos"></div>
   <script>
-    emulators.pathPrefix = "./emulators/";
-    Dos(document.getElementById("dos"), {});
+    window.onload = function() {
+      if (typeof emulators !== "undefined") {
+        emulators.pathPrefix = "./emulators/";
+      }
+      Dos(document.getElementById("dos"), {});
+    };
   </script>
 </body>
 </html>
