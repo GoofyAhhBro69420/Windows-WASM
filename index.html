@@ -19,10 +19,9 @@
   <div id="dos"></div>
   <script>
     window.onload = function() {
-      if (typeof emulators !== "undefined") {
-        emulators.pathPrefix = "./emulators/";
-      }
-      Dos(document.getElementById("dos"), {});
+      Dos(document.getElementById("dos"), {
+        pathPrefix: "./emulators/"
+      });
     };
   </script>
 </body>
