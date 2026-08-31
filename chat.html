@@ -1,99 +1,99 @@
-// 1. Configuration
-const SUPABASE_URL = 'https://ljewmtxtplreizuqnf.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_4gRphMZV4JmvpAslZRnLcQ_owj7V5Ii';
+</div> <!-- end of main-chat -->
 
-// Renamed variable to avoid name collision with the global 'supabase' object
-const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- ADD THIS SCRIPT TAG -->
+  <script>
+    const SUPABASE_URL = 'https://ljewmtxtplreizuqnf.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_4gRphMZV4JmvpAslZRnLcQ_owj7V5Ii';
 
-let currentChannel = 'general';
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentChannel = 'general';
 
-// 2. Load existing messages
-async function fetchMessages() {
-  const { data, error } = await client
-    .from('messages')
-    .select('*')
-    .eq('channel', currentChannel)
-    .order('created_at', { ascending: true });
+    async function fetchMessages() {
+      const { data, error } = await client
+        .from('messages')
+        .select('*')
+        .eq('channel', currentChannel)
+        .order('created_at', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching messages:', error);
-    return;
-  }
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
 
-  const container = document.getElementById('messages');
-  container.innerHTML = '';
-  if (data) data.forEach(msg => renderMessage(msg));
-  scrollToBottom();
-}
-
-// 3. Render message item
-function renderMessage(msg) {
-  const container = document.getElementById('messages');
-  const msgEl = document.createElement('div');
-  msgEl.className = 'message';
-  
-  const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  msgEl.innerHTML = `
-    <div class="message-author">${escapeHtml(msg.username || 'Anonymous')} <span>${time}</span></div>
-    <div class="message-content">${escapeHtml(msg.content)}</div>
-  `;
-  container.appendChild(msgEl);
-  scrollToBottom();
-}
-
-// 4. Send message
-async function sendMessage() {
-  const input = document.getElementById('message-input');
-  const usernameInput = document.getElementById('username-input');
-  const content = input.value.trim();
-  const username = usernameInput.value.trim() || 'User';
-
-  if (!content) return;
-  input.value = '';
-
-  const { error } = await client
-    .from('messages')
-    .insert([{ username, content, channel: currentChannel }]);
-
-  if (error) console.error('Error sending message:', error);
-}
-
-function handleKeyPress(e) {
-  if (e.key === 'Enter') sendMessage();
-}
-
-// 5. Switch Channels
-function switchChannel(channel) {
-  currentChannel = channel;
-  document.getElementById('channel-header').innerText = `# ${channel}`;
-  document.getElementById('message-input').placeholder = `Message #${channel}`;
-  document.querySelectorAll('.channel-item').forEach(el => {
-    el.classList.toggle('active', el.innerText.includes(channel));
-  });
-  fetchMessages();
-}
-
-function scrollToBottom() {
-  const container = document.getElementById('messages');
-  container.scrollTop = container.scrollHeight;
-}
-
-function escapeHtml(text) {
-  return text.replace(/[&<"']/g, function(m) {
-    return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m];
-  });
-}
-
-// 6. Real-time updates subscription
-client
-  .channel('public:messages')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-    if (payload.new.channel === currentChannel) {
-      renderMessage(payload.new);
+      const container = document.getElementById('messages');
+      container.innerHTML = '';
+      if (data) data.forEach(msg => renderMessage(msg));
+      scrollToBottom();
     }
-  })
-  .subscribe();
 
-// Initial load
-fetchMessages();
+    function renderMessage(msg) {
+      const container = document.getElementById('messages');
+      const msgEl = document.createElement('div');
+      msgEl.className = 'message';
+      
+      const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      msgEl.innerHTML = `
+        <div class="message-author">${escapeHtml(msg.username || 'Anonymous')} <span>${time}</span></div>
+        <div class="message-content">${escapeHtml(msg.content)}</div>
+      `;
+      container.appendChild(msgEl);
+      scrollToBottom();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const usernameInput = document.getElementById('username-input');
+      const content = input.value.trim();
+      const username = usernameInput.value.trim() || 'User';
+
+      if (!content) return;
+      input.value = '';
+
+      const { error } = await client
+        .from('messages')
+        .insert([{ username, content, channel: currentChannel }]);
+
+      if (error) console.error('Error sending message:', error);
+    }
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') sendMessage();
+    }
+
+    function switchChannel(channel) {
+      currentChannel = channel;
+      document.getElementById('channel-header').innerText = `# ${channel}`;
+      document.getElementById('message-input').placeholder = `Message #${channel}`;
+      document.querySelectorAll('.channel-item').forEach(el => {
+        el.classList.toggle('active', el.innerText.includes(channel));
+      });
+      fetchMessages();
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    client
+      .channel('public:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        if (payload.new.channel === currentChannel) {
+          renderMessage(payload.new);
+        }
+      })
+      .subscribe();
+
+    fetchMessages();
+  </script>
+  <!-- END OF SCRIPT TAG -->
+
+</body>
+</html>
