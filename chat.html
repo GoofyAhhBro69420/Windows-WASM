@@ -1,11 +1,71 @@
-</div> <!-- end of main-chat -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Clone</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    body { display: flex; height: 100vh; background-color: #313338; color: #dbdee1; }
+    
+    /* Sidebar */
+    .sidebar { width: 240px; background-color: #2b2d31; display: flex; flex-direction: column; padding: 10px; }
+    .server-name { padding: 10px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #1f2023; color: #f2f5f7; margin-bottom: 10px; }
+    .channels { flex: 1; }
+    .channel-item { padding: 8px 12px; border-radius: 4px; color: #949ba4; cursor: pointer; margin-bottom: 2px; }
+    .channel-item:hover, .channel-item.active { background-color: #35373c; color: #f2f5f7; }
+    .user-config { background: #232428; padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 5px; }
+    .user-config label { font-size: 11px; text-transform: uppercase; color: #b5bac1; font-weight: bold; }
+    .user-config input { background: #1e1f22; border: none; padding: 6px; color: #dbdee1; border-radius: 4px; outline: none; }
 
-  <!-- ADD THIS SCRIPT TAG -->
+    /* Chat Area */
+    .main-chat { flex: 1; display: flex; flex-direction: column; background-color: #313338; }
+    .chat-header { height: 48px; border-bottom: 1px solid #232428; display: flex; align-items: center; padding: 0 16px; font-weight: bold; color: #f2f5f7; }
+    .messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .message { display: flex; flex-direction: column; }
+    .message-author { font-weight: bold; font-size: 14px; color: #f2f5f7; margin-bottom: 2px; }
+    .message-author span { font-size: 11px; color: #949ba4; font-weight: normal; margin-left: 8px; }
+    .message-content { font-size: 14px; color: #dbdee1; line-height: 1.4; word-break: break-word; }
+
+    /* Input Area */
+    .input-area { padding: 0 16px 24px 16px; }
+    .input-wrapper { background-color: #383a40; border-radius: 8px; padding: 10px 16px; display: flex; }
+    .input-wrapper input { width: 100%; background: transparent; border: none; color: #dbdee1; outline: none; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="server-name">My Server</div>
+    <div class="channels">
+      <div class="channel-item active" onclick="switchChannel('general')"># general</div>
+      <div class="channel-item" onclick="switchChannel('random')"># random</div>
+    </div>
+    <div class="user-config">
+      <label>Display Name</label>
+      <input type="text" id="username-input" value="User" placeholder="Enter username">
+    </div>
+  </div>
+
+  <!-- Main Chat -->
+  <div class="main-chat">
+    <div class="chat-header" id="channel-header"># general</div>
+    <div class="messages-container" id="messages"></div>
+    <div class="input-area">
+      <div class="input-wrapper">
+        <input type="text" id="message-input" placeholder="Message #general" onkeydown="handleKeyPress(event)">
+      </div>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://ljewmtxtplreizuqnf.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_4gRphMZV4JmvpAslZRnLcQ_owj7V5Ii';
 
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     let currentChannel = 'general';
 
     async function fetchMessages() {
@@ -93,7 +153,5 @@
 
     fetchMessages();
   </script>
-  <!-- END OF SCRIPT TAG -->
-
 </body>
 </html>
