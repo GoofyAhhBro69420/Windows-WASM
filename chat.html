@@ -61,7 +61,6 @@
   </div>
 
   <script>
-    // Configured with your updated Supabase credentials
     const SUPABASE_URL = 'https://ijewmtxktfplreizuqnf.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_4gRphMZV4JmvpAslZRnLcQ_owj7V5Ii';
 
@@ -109,8 +108,19 @@
       const username = usernameInput.value.trim() || 'User';
 
       if (!content) return;
+
+      // Render instantly on the screen
+      const newMessage = {
+        username: username,
+        content: content,
+        channel: currentChannel,
+        created_at: new Date().toISOString()
+      };
+      renderMessage(newMessage);
+
       input.value = '';
 
+      // Save message to Supabase database
       const { error } = await client
         .from('messages')
         .insert([{ username, content, channel: currentChannel }]);
@@ -143,11 +153,12 @@
       });
     }
 
+    // Subscribe to real-time additions from other users
     client
       .channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         if (payload.new.channel === currentChannel) {
-          renderMessage(payload.new);
+          fetchMessages(); // Re-sync chat state when database receives updates
         }
       })
       .subscribe();
