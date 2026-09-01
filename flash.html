@@ -1,1 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flash Player Emulator</title>
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #313338;
+      color: #dbdee1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .emulator-card {
+      background: #2b2d31;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 800px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    h2 {
+      margin-bottom: 8px;
+      color: #f2f5f7;
+    }
+    p {
+      font-size: 14px;
+      color: #949ba4;
+      margin-bottom: 16px;
+    }
+    .file-input-wrapper {
+      margin-bottom: 16px;
+    }
+    input[type="file"] {
+      color: #dbdee1;
+      font-size: 14px;
+    }
+    #flash-player-container {
+      width: 100%;
+      height: 500px;
+      background: #1e1f22;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .placeholder-text {
+      color: #949ba4;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
 
+  <div class="emulator-card">
+    <h2>Flash Emulator</h2>
+    <p>Select a <code>.swf</code> file from your computer to run it directly in your browser.</p>
+    
+    <div class="file-input-wrapper">
+      <input type="file" id="swf-uploader" accept=".swf">
+    </div>
+
+    <div id="flash-player-container">
+      <span class="placeholder-text" id="placeholder">No .swf file loaded yet</span>
+    </div>
+  </div>
+
+  <script>
+    window.RufflePlayer = window.RufflePlayer || {};
+
+    document.getElementById('swf-uploader').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const container = document.getElementById('flash-player-container');
+      container.innerHTML = ''; // Clear container
+
+      // Initialize Ruffle player instance
+      const ruffle = window.RufflePlayer.newest();
+      const player = ruffle.createPlayer();
+
+      player.style.width = '100%';
+      player.style.height = '100%';
+      container.appendChild(player);
+
+      // Read uploaded file as ArrayBuffer and load into Ruffle
+      const arrayBuffer = await file.arrayBuffer();
+      player.load({ data: new Uint8Array(arrayBuffer) });
+    });
+  </script>
+
+</body>
+</html>
