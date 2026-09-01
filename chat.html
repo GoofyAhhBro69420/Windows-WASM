@@ -129,7 +129,11 @@
         .insert([{ username, password, avatar_url: avatarUrl }]);
 
       if (error) {
-        alert("Registration failed: " + error.message);
+        if (error.code === '23505') {
+          alert("That username is already taken! Please pick another one.");
+        } else {
+          alert("Registration failed: " + error.message);
+        }
       } else {
         alert("Account created! You can now log in.");
       }
@@ -154,6 +158,10 @@
         document.getElementById('account-active').style.display = 'flex';
         document.getElementById('active-username').innerText = data.username;
         document.getElementById('my-pfp').src = data.avatar_url || DEFAULT_PFP;
+        
+        document.getElementById('username-input').value = '';
+        document.getElementById('password-input').value = '';
+        document.getElementById('avatar-input').value = '';
       } else {
         alert("Invalid username or password");
       }
@@ -190,8 +198,8 @@
 
       let nameHTML = `<span class="message-author">${escapeHtml(msg.username || 'Anonymous')}</span>`;
       
-      // Owner styling check
-      if (msg.username === OWNER_USERNAME) {
+      // Strict check: verified AND matches owner name
+      if (msg.is_verified && msg.username === OWNER_USERNAME) {
         nameHTML = `<span class="message-author owner-user">${escapeHtml(msg.username)}</span>`;
       } else if (msg.is_verified) {
         const color = msg.role_color || '#3498db';
@@ -223,22 +231,11 @@
 
       if (!content) return;
 
-      const username = currentUser ? currentUser.username : (document.getElementById('username-input').value.trim() || 'Anonymous');
+      const username = currentUser ? currentUser.username : 'Anonymous';
       const avatar_url = currentUser ? (currentUser.avatar_url || DEFAULT_PFP) : DEFAULT_PFP;
       const is_verified = currentUser ? true : false;
       const role_color = currentUser ? currentUser.role_color : null;
 
-      const newMessage = {
-        username,
-        content,
-        channel: currentChannel,
-        avatar_url,
-        is_verified,
-        role_color,
-        created_at: new Date().toISOString()
-      };
-
-      renderMessage(newMessage);
       input.value = '';
 
       const { error } = await client
