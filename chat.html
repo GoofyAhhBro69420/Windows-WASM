@@ -10,25 +10,55 @@
     body { display: flex; height: 100vh; background-color: #313338; color: #dbdee1; }
     
     /* Sidebar */
-    .sidebar { width: 240px; background-color: #2b2d31; display: flex; flex-direction: column; padding: 10px; }
+    .sidebar { width: 260px; background-color: #2b2d31; display: flex; flex-direction: column; padding: 10px; }
     .server-name { padding: 10px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #1f2023; color: #f2f5f7; margin-bottom: 10px; }
     .channels { flex: 1; }
     .channel-item { padding: 8px 12px; border-radius: 4px; color: #949ba4; cursor: pointer; margin-bottom: 2px; }
     .channel-item:hover, .channel-item.active { background-color: #35373c; color: #f2f5f7; }
-    .user-config { background: #232428; padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 5px; }
-    .user-config label { font-size: 11px; text-transform: uppercase; color: #b5bac1; font-weight: bold; }
-    .user-config input { background: #1e1f22; border: none; padding: 6px; color: #dbdee1; border-radius: 4px; outline: none; }
+    
+    /* Account Box */
+    .account-box { background: #232428; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
+    .account-box label { font-size: 11px; text-transform: uppercase; color: #b5bac1; font-weight: bold; }
+    .account-box input { background: #1e1f22; border: none; padding: 6px; color: #dbdee1; border-radius: 4px; outline: none; font-size: 12px; }
+    .btn-group { display: flex; gap: 6px; }
+    .account-box button { flex: 1; padding: 6px; border: none; border-radius: 4px; background: #5865f2; color: #fff; font-weight: bold; cursor: pointer; font-size: 12px; }
+    .account-box button:hover { background: #4752c4; }
+    .logged-in-status { font-size: 12px; display: flex; align-items: center; gap: 8px; }
 
-    /* Chat Area */
+    /* Main Chat */
     .main-chat { flex: 1; display: flex; flex-direction: column; background-color: #313338; }
     .chat-header { height: 48px; border-bottom: 1px solid #232428; display: flex; align-items: center; padding: 0 16px; font-weight: bold; color: #f2f5f7; }
     .messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .message { display: flex; flex-direction: column; }
-    .message-author { font-weight: bold; font-size: 14px; color: #f2f5f7; margin-bottom: 2px; }
-    .message-author span { font-size: 11px; color: #949ba4; font-weight: normal; margin-left: 8px; }
+    
+    /* Messages & Avatars */
+    .message { display: flex; align-items: flex-start; gap: 12px; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: #1e1f22; flex-shrink: 0; }
+    .message-body { display: flex; flex-direction: column; }
+    .message-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .message-author { font-weight: bold; font-size: 14px; color: #f2f5f7; }
+    .message-time { font-size: 11px; color: #949ba4; }
     .message-content { font-size: 14px; color: #dbdee1; line-height: 1.4; word-break: break-word; }
 
-    /* Input Area */
+    /* Custom Name Styles */
+    .owner-user {
+      font-weight: bold;
+      color: #00FF66 !important;
+      text-shadow: 0 0 8px #00FF66, 0 0 12px rgba(0, 255, 102, 0.6);
+    }
+    .verified-user {
+      font-weight: bold;
+      text-shadow: 0 0 8px currentColor;
+    }
+    .verified-badge {
+      font-size: 9px;
+      background: #3498db;
+      color: #fff;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-weight: bold;
+    }
+
+    /* Message Input Area */
     .input-area { padding: 0 16px 24px 16px; }
     .input-wrapper { background-color: #383a40; border-radius: 8px; padding: 10px 16px; display: flex; }
     .input-wrapper input { width: 100%; background: transparent; border: none; color: #dbdee1; outline: none; font-size: 14px; }
@@ -43,9 +73,24 @@
       <div class="channel-item active" onclick="switchChannel('general')"># general</div>
       <div class="channel-item" onclick="switchChannel('random')"># random</div>
     </div>
-    <div class="user-config">
-      <label>Display Name</label>
-      <input type="text" id="username-input" value="User" placeholder="Enter username">
+    
+    <!-- Account Manager -->
+    <div class="account-box">
+      <div id="account-form">
+        <label>Account Login / Register</label>
+        <input type="text" id="username-input" placeholder="Username" style="margin-bottom: 4px;">
+        <input type="password" id="password-input" placeholder="Password" style="margin-bottom: 4px;">
+        <input type="text" id="avatar-input" placeholder="PFP Image URL (Optional)" style="margin-bottom: 6px;">
+        <div class="btn-group">
+          <button onclick="loginAccount()">Login</button>
+          <button onclick="registerAccount()" style="background:#23a55a;">Register</button>
+        </div>
+      </div>
+      <div id="account-active" style="display: none;" class="logged-in-status">
+        <img id="my-pfp" class="avatar" style="width:28px; height:28px;">
+        <span id="active-username" style="font-weight: bold;"></span>
+        <button onclick="logoutAccount()" style="margin-left:auto; background:#f23f43; padding:2px 6px;">Exit</button>
+      </div>
     </div>
   </div>
 
@@ -63,10 +108,62 @@
   <script>
     const SUPABASE_URL = 'https://ijewmtxktfplreizuqnf.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_4gRphMZV4JmvpAslZRnLcQ_owj7V5Ii';
-
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Set your exact owner username here
+    const OWNER_USERNAME = 'YourUsername';
+    const DEFAULT_PFP = 'https://cdn.discordapp.com/embed/avatars/0.png';
+
     let currentChannel = 'general';
+    let currentUser = null;
+
+    async function registerAccount() {
+      const username = document.getElementById('username-input').value.trim();
+      const password = document.getElementById('password-input').value.trim();
+      const avatarUrl = document.getElementById('avatar-input').value.trim() || DEFAULT_PFP;
+
+      if (!username || !password) return alert("Enter both username and password");
+
+      const { data, error } = await client
+        .from('profiles')
+        .insert([{ username, password, avatar_url: avatarUrl }]);
+
+      if (error) {
+        alert("Registration failed: " + error.message);
+      } else {
+        alert("Account created! You can now log in.");
+      }
+    }
+
+    async function loginAccount() {
+      const username = document.getElementById('username-input').value.trim();
+      const password = document.getElementById('password-input').value.trim();
+
+      if (!username || !password) return alert("Enter both username and password");
+
+      const { data, error } = await client
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
+
+      if (data) {
+        currentUser = data;
+        document.getElementById('account-form').style.display = 'none';
+        document.getElementById('account-active').style.display = 'flex';
+        document.getElementById('active-username').innerText = data.username;
+        document.getElementById('my-pfp').src = data.avatar_url || DEFAULT_PFP;
+      } else {
+        alert("Invalid username or password");
+      }
+    }
+
+    function logoutAccount() {
+      currentUser = null;
+      document.getElementById('account-form').style.display = 'block';
+      document.getElementById('account-active').style.display = 'none';
+    }
 
     async function fetchMessages() {
       const { data, error } = await client
@@ -75,10 +172,7 @@
         .eq('channel', currentChannel)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
+      if (error) return console.error('Error fetching messages:', error);
 
       const container = document.getElementById('messages');
       container.innerHTML = '';
@@ -92,10 +186,32 @@
       msgEl.className = 'message';
       
       const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const pfpUrl = msg.avatar_url || DEFAULT_PFP;
+
+      let nameHTML = `<span class="message-author">${escapeHtml(msg.username || 'Anonymous')}</span>`;
+      
+      // Owner styling check
+      if (msg.username === OWNER_USERNAME) {
+        nameHTML = `<span class="message-author owner-user">${escapeHtml(msg.username)}</span>`;
+      } else if (msg.is_verified) {
+        const color = msg.role_color || '#3498db';
+        nameHTML = `
+          <span class="message-author verified-user" style="color: ${color};">
+            ${escapeHtml(msg.username)}
+          </span>
+          <span class="verified-badge">✓ VERIFIED</span>
+        `;
+      }
 
       msgEl.innerHTML = `
-        <div class="message-author">${escapeHtml(msg.username || 'Anonymous')} <span>${time}</span></div>
-        <div class="message-content">${escapeHtml(msg.content)}</div>
+        <img class="avatar" src="${pfpUrl}" onerror="this.src='${DEFAULT_PFP}'">
+        <div class="message-body">
+          <div class="message-header">
+            ${nameHTML}
+            <span class="message-time">${time}</span>
+          </div>
+          <div class="message-content">${escapeHtml(msg.content)}</div>
+        </div>
       `;
       container.appendChild(msgEl);
       scrollToBottom();
@@ -103,27 +219,31 @@
 
     async function sendMessage() {
       const input = document.getElementById('message-input');
-      const usernameInput = document.getElementById('username-input');
       const content = input.value.trim();
-      const username = usernameInput.value.trim() || 'User';
 
       if (!content) return;
 
-      // Render instantly on the screen
+      const username = currentUser ? currentUser.username : (document.getElementById('username-input').value.trim() || 'Anonymous');
+      const avatar_url = currentUser ? (currentUser.avatar_url || DEFAULT_PFP) : DEFAULT_PFP;
+      const is_verified = currentUser ? true : false;
+      const role_color = currentUser ? currentUser.role_color : null;
+
       const newMessage = {
-        username: username,
-        content: content,
+        username,
+        content,
         channel: currentChannel,
+        avatar_url,
+        is_verified,
+        role_color,
         created_at: new Date().toISOString()
       };
-      renderMessage(newMessage);
 
+      renderMessage(newMessage);
       input.value = '';
 
-      // Save message to Supabase database
       const { error } = await client
         .from('messages')
-        .insert([{ username, content, channel: currentChannel }]);
+        .insert([{ username, content, channel: currentChannel, avatar_url, is_verified, role_color }]);
 
       if (error) console.error('Error sending message:', error);
     }
@@ -153,12 +273,11 @@
       });
     }
 
-    // Subscribe to real-time additions from other users
     client
       .channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         if (payload.new.channel === currentChannel) {
-          fetchMessages(); // Re-sync chat state when database receives updates
+          fetchMessages();
         }
       })
       .subscribe();
