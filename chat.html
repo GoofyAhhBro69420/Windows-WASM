@@ -75,26 +75,27 @@
       <div class="channel-item" onclick="switchChannel('random')"># random</div>
     </div>
     
-    <!-- Account Manager -->
-    <div class="account-box">
-      <div id="account-form">
-        <label>Account Login / Register</label>
-        <input type="text" id="username-input" placeholder="Username" style="margin-bottom: 4px;">
-        <input type="password" id="password-input" placeholder="Password" style="margin-bottom: 4px;">
-        <input type="text" id="avatar-input" placeholder="PFP Image URL (Optional)" style="margin-bottom: 6px;">
-        <div class="btn-group">
-          <button onclick="loginAccount()">Login</button>
-          <button onclick="registerAccount()" style="background:#23a55a;">Register</button>
+  <!-- Account Manager -->
+      <div class="account-box">
+        <div id="account-form">
+          <label>Account Login / Register</label>
+          <input type="text" id="username-input" placeholder="Username" style="margin-bottom: 4px;">
+          <input type="password" id="password-input" placeholder="Password" style="margin-bottom: 4px;">
+          <input type="text" id="avatar-input" placeholder="PFP Image URL (Optional)" style="margin-bottom: 6px;">
+          <div class="btn-group">
+            <button onclick="loginAccount()">Login</button>
+            <button onclick="registerAccount()" style="background:#23a55a;">Register</button>
+          </div>
+        </div>
+  
+        <div id="account-active" style="display: none;" class="logged-in-status">
+          <img id="my-pfp" class="avatar" style="width:28px; height:28px; cursor: pointer;" onclick="updateProfilePicture()" title="Click to change PFP">
+          <span id="active-username" style="font-weight: bold;"></span>
+          <button onclick="updateProfilePicture()" style="background:#4e5058; padding:2px 6px;">Edit</button>
+          <button onclick="logoutAccount()" style="margin-left:auto; background:#f23f43; padding:2px 6px;">Exit</button>
         </div>
       </div>
-      <div id="account-active" style="display: none;" class="logged-in-status">
-        <img id="my-pfp" class="avatar" style="width:28px; height:28px;">
-        <span id="active-username" style="font-weight: bold;"></span>
-        <button onclick="logoutAccount()" style="margin-left:auto; background:#f23f43; padding:2px 6px;">Exit</button>
-      </div>
-    </div>
-  </div>
-
+    
   <!-- Main Chat -->
   <div class="main-chat">
     <div class="chat-header" id="channel-header"># general</div>
@@ -172,6 +173,27 @@
       currentUser = null;
       document.getElementById('account-form').style.display = 'block';
       document.getElementById('account-active').style.display = 'none';
+    }
+
+    // DELETE ME
+    async function updateProfilePicture() {
+      if (!currentUser) return;
+
+      const newUrl = prompt("Enter a new Profile Picture URL:", currentUser.avatar_url || '');
+      if (!newUrl) return;
+
+      const { data, error } = await client
+        .from('profiles')
+        .update({ avatar_url: newUrl })
+        .eq('username', currentUser.username);
+
+      if (error) {
+        alert("Failed to update profile picture: " + error.message);
+      } else {
+        currentUser.avatar_url = newUrl;
+        document.getElementById('my-pfp').src = newUrl;
+        alert("Profile picture updated!");
+      }
     }
 
     async function fetchMessages() {
