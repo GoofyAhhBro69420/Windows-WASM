@@ -1,4 +1,4 @@
-<!DOC<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -25,9 +25,10 @@
     .account-box { background: #232428; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
     .account-box label { font-size: 11px; text-transform: uppercase; color: #b5bac1; font-weight: bold; }
     .account-box input { background: #1e1f22; border: none; padding: 6px; color: #dbdee1; border-radius: 4px; outline: none; font-size: 12px; }
-    .btn-group { display: flex; gap: 6px; }
-    .account-box button { flex: 1; padding: 6px; border: none; border-radius: 4px; background: #5865f2; color: #fff; font-weight: bold; cursor: pointer; font-size: 12px; }
+    .account-box button { width: 100%; padding: 6px; border: none; border-radius: 4px; background: #5865f2; color: #fff; font-weight: bold; cursor: pointer; font-size: 12px; }
     .account-box button:hover { background: #4752c4; }
+    .register-subtext { font-size: 11px; text-align: center; color: #949ba4; margin-top: 4px; }
+    .register-subtext a { color: #5865f2; text-decoration: none; font-weight: bold; }
     .logged-in-status { font-size: 12px; display: flex; align-items: center; gap: 8px; }
 
     /* Main Chat */
@@ -89,21 +90,20 @@
     <!-- Account Manager -->
     <div class="account-box">
       <div id="account-form">
-        <label>Account Login / Register</label>
+        <label>Account Login</label>
         <input type="text" id="username-input" placeholder="Username" style="margin-bottom: 4px;">
-        <input type="password" id="password-input" placeholder="Password" style="margin-bottom: 4px;">
-        <input type="text" id="avatar-input" placeholder="PFP Image URL (Optional)" style="margin-bottom: 6px;">
-        <div class="btn-group">
-          <button onclick="loginAccount()">Login</button>
-          <button onclick="registerAccount()" style="background:#23a55a;">Register</button>
+        <input type="password" id="password-input" placeholder="Password" style="margin-bottom: 6px;">
+        <button onclick="loginAccount()">Login</button>
+        <div class="register-subtext">
+          Need an account? <a href="register.html">Register</a>
         </div>
       </div>
 
       <div id="account-active" style="display: none;" class="logged-in-status">
         <img id="my-pfp" class="avatar" style="width:28px; height:28px; cursor: pointer;" onclick="updateProfilePicture()" title="Click to change PFP">
         <span id="active-username" style="font-weight: bold;"></span>
-        <button onclick="updateProfilePicture()" style="background:#4e5058; padding:2px 6px;">Edit</button>
-        <button onclick="logoutAccount()" style="margin-left:auto; background:#f23f43; padding:2px 6px;">Exit</button>
+        <button onclick="updateProfilePicture()" style="background:#4e5058; padding:2px 6px; width:auto;">Edit</button>
+        <button onclick="logoutAccount()" style="margin-left:auto; background:#f23f43; padding:2px 6px; width:auto;">Exit</button>
       </div>
     </div>
   </div>
@@ -132,28 +132,6 @@
     let lastMessageTime = 0;
     const COOLDOWN_MS = 2000; // 2 second anti-spam
 
-    async function registerAccount() {
-      const username = document.getElementById('username-input').value.trim();
-      const password = document.getElementById('password-input').value.trim();
-      const avatarUrl = document.getElementById('avatar-input').value.trim() || DEFAULT_PFP;
-
-      if (!username || !password) return alert("Enter both username and password");
-
-      const { data, error } = await client
-        .from('profiles')
-        .insert([{ username, password, avatar_url: avatarUrl }]);
-
-      if (error) {
-        if (error.code === '23505') {
-          alert("That username is already taken! Please pick another one.");
-        } else {
-          alert("Registration failed: " + error.message);
-        }
-      } else {
-        alert("Account created! You can now log in.");
-      }
-    }
-
     async function loginAccount() {
       const username = document.getElementById('username-input').value.trim();
       const password = document.getElementById('password-input').value.trim();
@@ -176,7 +154,6 @@
         
         document.getElementById('username-input').value = '';
         document.getElementById('password-input').value = '';
-        document.getElementById('avatar-input').value = '';
       } else {
         alert("Invalid username or password");
       }
@@ -233,9 +210,9 @@
       const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const pfpUrl = msg.avatar_url || DEFAULT_PFP;
 
-      let nameHTML = `<span class="message-author">${escapeHtml(msg.username || 'Anonymous')}</span>`;
+      let nameHTML = `<span class="message-author" style="color: #949ba4;">${escapeHtml(msg.username || 'Anonymous')}</span>`;
       
-      if (msg.is_verified && msg.username === OWNER_USERNAME) {
+      if (msg.username === OWNER_USERNAME) {
         nameHTML = `<span class="message-author owner-user">${escapeHtml(msg.username)}</span>`;
       } else if (msg.is_verified) {
         const color = msg.role_color || '#3498db';
@@ -245,6 +222,9 @@
           </span>
           <span class="verified-badge">✓ VERIFIED</span>
         `;
+      } else if (msg.username) {
+        const color = msg.role_color || '#949ba4';
+        nameHTML = `<span class="message-author" style="color: ${color};">${escapeHtml(msg.username)}</span>`;
       }
 
       msgEl.innerHTML = `
@@ -274,8 +254,8 @@
 
       const username = currentUser ? currentUser.username : 'Anonymous';
       const avatar_url = currentUser ? (currentUser.avatar_url || DEFAULT_PFP) : DEFAULT_PFP;
-      const is_verified = currentUser ? true : false;
-      const role_color = currentUser ? currentUser.role_color : null;
+      const is_verified = currentUser ? Boolean(currentUser.is_verified) : false;
+      const role_color = currentUser ? (currentUser.role_color || '#949ba4') : '#949ba4';
 
       input.value = '';
       lastMessageTime = now;
