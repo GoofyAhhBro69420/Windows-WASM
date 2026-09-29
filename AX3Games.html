@@ -1,1 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steam Library Zone</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { display: flex; height: 100vh; background-color: #171d25; color: #c6d4df; overflow: hidden; }
 
+    /* Top Nav */
+    .site-nav { position: absolute; top: 0; left: 0; right: 0; height: 35px; background: #101214; display: flex; align-items: center; padding: 0 15px; font-size: 12px; z-index: 10; border-bottom: 1px solid #2a475e; }
+    .site-nav a { color: #66c0f4; text-decoration: none; margin-right: 15px; font-weight: bold; }
+
+    /* Layout */
+    .container { display: flex; width: 100%; height: calc(100vh - 35px); margin-top: 35px; }
+
+    /* Sidebar Game List */
+    .sidebar { width: 260px; background-color: #1b2838; border-right: 1px solid #2a475e; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 12px; font-size: 11px; font-weight: bold; color: #8f98a0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2a475e; }
+    .game-list { flex: 1; overflow-y: auto; }
+    .game-item { display: flex; align-items: center; padding: 10px 12px; cursor: pointer; font-size: 13px; color: #8f98a0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .game-item:hover, .game-item.active { background-color: #2a475e; color: #ffffff; }
+
+    /* Status Dots */
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+    .dot-green { background-color: #5c7e10; box-shadow: 0 0 5px #5c7e10; }
+    .dot-yellow { background-color: #f39c12; box-shadow: 0 0 5px #f39c12; }
+    .dot-red { background-color: #e74c3c; box-shadow: 0 0 5px #e74c3c; }
+
+    /* Main Game Detail View */
+    .main-view { flex: 1; display: flex; flex-direction: column; background: #121821; position: relative; }
+    .hero-banner { height: 220px; background-size: cover; background-position: center; position: relative; display: flex; align-items: flex-end; padding: 20px; border-bottom: 2px solid #2a475e; }
+    .hero-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to top, #121821 10%, transparent 100%); }
+    .hero-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 20px; }
+    .game-title { font-size: 28px; font-weight: bold; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+    /* Steam Play Button */
+    .play-btn { background: linear-gradient(90deg, #47bfff 0%, #1a9fff 100%); color: #fff; border: none; padding: 12px 36px; font-size: 16px; font-weight: bold; border-radius: 2px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px rgba(26,159,255,0.4); }
+    .play-btn:hover { background: linear-gradient(90deg, #66c0f4 0%, #33a8ff 100%); }
+
+    /* Game View Frame */
+    .game-frame-container { flex: 1; width: 100%; height: 100%; background: #000; display: none; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+
+  <div class="site-nav">
+    <a href="windows.html">windows.html</a>
+    <a href="chat.html">chat.html</a>
+    <a href="flash.html">flash.html</a>
+    <a href="eagle188.html">eagle188.html</a>
+    <a href="psp.html">psp.html</a>
+    <a href="games.html" style="color:#fff;">games.html</a>
+  </div>
+
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">All Games (<span id="game-count">0</span>)</div>
+      <div class="game-list" id="game-list"></div>
+    </div>
+
+    <!-- Main View -->
+    <div class="main-view">
+      <div id="hero-banner" class="hero-banner">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <button class="play-btn" onclick="launchGame()">▶ Play</button>
+          <div class="game-title" id="game-title-display">Select a Game</div>
+        </div>
+      </div>
+
+      <div id="game-frame-container" class="game-frame-container">
+        <iframe id="game-iframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const games = [
+      {
+        name: "GTA 3 (Chromebook)",
+        status: "green",
+        url: "https://goofyahhbro69420.github.io/GrandTheftChromebook/",
+        banner: "https://images.alphacoders.com/270/270212.jpg"
+      },
+      {
+        name: "Eaglercraft 1.8.8",
+        status: "green",
+        url: "eagle188.html",
+        banner: "https://images.alphacoders.com/131/1312569.jpeg"
+      },
+      {
+        name: "Windows / JS-DOS Emulator",
+        status: "yellow",
+        url: "windows.html",
+        banner: "https://images.alphacoders.com/112/1123282.jpg"
+      },
+      {
+        name: "Flash Emulator Zone",
+        status: "yellow",
+        url: "flash.html",
+        banner: "https://images2.alphacoders.com/605/605592.jpg"
+      },
+      {
+        name: "PSP Emulator Zone",
+        status: "yellow",
+        url: "psp.html",
+        banner: "https://images.alphacoders.com/514/514210.jpg"
+      },
+      {
+        name: "Call of Duty: Modern Warfare Web",
+        status: "yellow",
+        url: "https://mw.slqnt.dev/",
+        banner: "https://images7.alphacoders.com/104/1042302.jpg"
+      },
+      {
+        name: "Super Smash Bros. Melee PC",
+        status: "yellow",
+        url: "https://999sian.github.io/melee-pc/play/",
+        banner: "https://images3.alphacoders.com/216/216513.jpg"
+      }
+    ];
+
+    let selectedGame = null;
+
+    function initLibrary() {
+      const listContainer = document.getElementById('game-list');
+      document.getElementById('game-count').innerText = games.length;
+      listContainer.innerHTML = '';
+
+      games.forEach((game, index) => {
+        const item = document.createElement('div');
+        item.className = 'game-item';
+        item.onclick = () => selectGame(index);
+
+        let dotClass = 'dot-green';
+        if (game.status === 'yellow') dotClass = 'dot-yellow';
+        if (game.status === 'red') dotClass = 'dot-red';
+
+        item.innerHTML = `
+          <div class="status-dot ${dotClass}"></div>
+          <span>${game.name}</span>
+        `;
+        listContainer.appendChild(item);
+      });
+
+      if (games.length > 0) selectGame(0);
+    }
+
+    function selectGame(index) {
+      selectedGame = games[index];
+
+      const items = document.querySelectorAll('.game-item');
+      items.forEach((item, i) => item.classList.toggle('active', i === index));
+
+      document.getElementById('hero-banner').style.display = 'flex';
+      document.getElementById('game-frame-container').style.display = 'none';
+      document.getElementById('game-iframe').src = '';
+
+      document.getElementById('game-title-display').innerText = selectedGame.name;
+      document.getElementById('hero-banner').style.backgroundImage = `url('${selectedGame.banner}')`;
+    }
+
+    function launchGame() {
+      if (!selectedGame) return;
+      document.getElementById('hero-banner').style.display = 'none';
+      document.getElementById('game-frame-container').style.display = 'block';
+      document.getElementById('game-iframe').src = selectedGame.url;
+    }
+
+    initLibrary();
+  </script>
+</body>
+</html>
