@@ -210,7 +210,7 @@
       const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const pfpUrl = msg.avatar_url || DEFAULT_PFP;
 
-      let nameHTML = `<span class="message-author" style="color: #949ba4;">${escapeHtml(msg.username || 'Anonymous')}</span>`;
+      let nameHTML = `<span class="message-author" style="color: #f2f5f7;">${escapeHtml(msg.username || 'Anonymous')}</span>`;
       
       if (msg.username === OWNER_USERNAME) {
         nameHTML = `<span class="message-author owner-user">${escapeHtml(msg.username)}</span>`;
@@ -222,9 +222,11 @@
           </span>
           <span class="verified-badge">✓ VERIFIED</span>
         `;
-      } else if (msg.username) {
+      } else if (msg.username && msg.username !== 'Anonymous') {
         const color = msg.role_color || '#949ba4';
         nameHTML = `<span class="message-author" style="color: ${color};">${escapeHtml(msg.username)}</span>`;
+      } else {
+        nameHTML = `<span class="message-author" style="color: #f2f5f7;">Anonymous</span>`;
       }
 
       msgEl.innerHTML = `
@@ -255,7 +257,11 @@
       const username = currentUser ? currentUser.username : 'Anonymous';
       const avatar_url = currentUser ? (currentUser.avatar_url || DEFAULT_PFP) : DEFAULT_PFP;
       const is_verified = currentUser ? Boolean(currentUser.is_verified) : false;
-      const role_color = currentUser ? (currentUser.role_color || '#949ba4') : '#949ba4';
+      
+      let role_color = '#f2f5f7';
+      if (currentUser) {
+        role_color = currentUser.role_color || '#949ba4';
+      }
 
       input.value = '';
       lastMessageTime = now;
