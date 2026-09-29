@@ -32,12 +32,15 @@
     .main-view { flex: 1; display: flex; flex-direction: column; background: #121821; position: relative; }
     .hero-banner { height: 220px; background-size: cover; background-position: center; position: relative; display: flex; align-items: flex-end; padding: 20px; border-bottom: 2px solid #2a475e; }
     .hero-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to top, #121821 10%, transparent 100%); }
-    .hero-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 20px; }
-    .game-title { font-size: 28px; font-weight: bold; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    .hero-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .game-title { font-size: 28px; font-weight: bold; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%; margin-bottom: 8px; }
 
-    /* Steam Play Button */
-    .play-btn { background: linear-gradient(90deg, #47bfff 0%, #1a9fff 100%); color: #fff; border: none; padding: 12px 36px; font-size: 16px; font-weight: bold; border-radius: 2px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px rgba(26,159,255,0.4); }
+    /* Steam Buttons */
+    .play-btn { background: linear-gradient(90deg, #47bfff 0%, #1a9fff 100%); color: #fff; border: none; padding: 12px 32px; font-size: 15px; font-weight: bold; border-radius: 2px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px rgba(26,159,255,0.4); }
     .play-btn:hover { background: linear-gradient(90deg, #66c0f4 0%, #33a8ff 100%); }
+
+    .external-btn { background: #2a475e; color: #66c0f4; border: 1px solid #66c0f4; padding: 12px 20px; font-size: 14px; font-weight: bold; border-radius: 2px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .external-btn:hover { background: #1b2838; color: #fff; border-color: #fff; }
 
     /* Game View Frame */
     .game-frame-container { flex: 1; width: 100%; height: 100%; background: #000; display: none; }
@@ -67,8 +70,9 @@
       <div id="hero-banner" class="hero-banner">
         <div class="hero-overlay"></div>
         <div class="hero-content">
-          <button class="play-btn" onclick="launchGame()">▶ Play</button>
           <div class="game-title" id="game-title-display">Select a Game</div>
+          <button class="play-btn" onclick="launchGame()">▶ Play Embedded</button>
+          <a id="external-link" href="#" target="_blank" class="external-btn">↗ Open Direct Link</a>
         </div>
       </div>
 
@@ -162,6 +166,9 @@
 
       document.getElementById('game-title-display').innerText = selectedGame.name;
       document.getElementById('hero-banner').style.backgroundImage = `url('${selectedGame.banner}')`;
+      
+      // Update external direct link button target
+      document.getElementById('external-link').href = selectedGame.url;
     }
 
     function launchGame() {
