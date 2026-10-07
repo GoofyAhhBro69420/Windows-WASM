@@ -79,6 +79,9 @@
       <a href="chat.html">chat.html</a>
       <a href="flash.html">flash.html</a>
       <a href="eagle188.html">eagle188.html</a>
+      <a href="psp.html">psp.html</a>
+      <a href="games.html">games.html</a>
+      <a href="profile.html">profile.html</a>
     </div>
 
     <div class="server-name">My Server</div>
@@ -132,6 +135,27 @@
     let lastMessageTime = 0;
     const COOLDOWN_MS = 2000; // 2 second anti-spam
 
+    async function checkSavedSession() {
+      const savedUser = localStorage.getItem('chat_user');
+      if (!savedUser) return;
+
+      const { data, error } = await client
+        .from('profiles')
+        .select('*')
+        .eq('username', savedUser)
+        .single();
+
+      if (data) {
+        currentUser = data;
+        document.getElementById('account-form').style.display = 'none';
+        document.getElementById('account-active').style.display = 'flex';
+        document.getElementById('active-username').innerText = data.username;
+        document.getElementById('my-pfp').src = data.avatar_url || DEFAULT_PFP;
+      } else {
+        localStorage.removeItem('chat_user');
+      }
+    }
+
     async function loginAccount() {
       const username = document.getElementById('username-input').value.trim();
       const password = document.getElementById('password-input').value.trim();
@@ -147,6 +171,8 @@
 
       if (data) {
         currentUser = data;
+        localStorage.setItem('chat_user', data.username);
+
         document.getElementById('account-form').style.display = 'none';
         document.getElementById('account-active').style.display = 'flex';
         document.getElementById('active-username').innerText = data.username;
@@ -161,6 +187,7 @@
 
     function logoutAccount() {
       currentUser = null;
+      localStorage.removeItem('chat_user');
       document.getElementById('account-form').style.display = 'block';
       document.getElementById('account-active').style.display = 'none';
     }
@@ -229,8 +256,7 @@
         nameHTML = `<span class="message-author" style="color: #f2f5f7;">Anonymous</span>`;
       }
 
-// Convert nameHTML into a clickable link to profile.html
-      const profileLink = msg.username 
+      const profileLink = (msg.username && msg.username !== 'Anonymous')
         ? `<a href="profile.html?user=${encodeURIComponent(msg.username)}" style="text-decoration: none;">${nameHTML}</a>`
         : nameHTML;
 
@@ -312,6 +338,7 @@
       })
       .subscribe();
 
+    checkSavedSession();
     fetchMessages();
   </script>
 </body>
