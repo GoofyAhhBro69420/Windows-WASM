@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    body { background-color: #313338; color: #dbdee1; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    
+    /* Site Nav */
+    .site-nav { width: 100%; padding: 10px 16px; background: #1e1f22; border-bottom: 1px solid #1f2023; font-size: 12px; }
+    .site-nav a { color: #5865f2; text-decoration: none; margin-right: 12px; font-weight: bold; }
+
+    /* Profile Container */
+    .profile-card { background: #2b2d31; width: 100%; max-width: 500px; margin-top: 40px; padding: 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 16px; }
+    
+    .profile-header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #35373c; padding-bottom: 16px; }
+    .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: #1e1f22; }
+    .user-info { display: flex; flex-direction: column; gap: 4px; }
+    .username-title { font-size: 20px; font-weight: bold; color: #f2f5f7; display: flex; align-items: center; gap: 8px; }
+    .verified-badge { font-size: 10px; background: #3498db; color: #fff; border-radius: 3px; padding: 2px 6px; font-weight: bold; }
+    .unverified-badge { font-size: 10px; background: #4e5058; color: #dbdee1; border-radius: 3px; padding: 2px 6px; font-weight: bold; }
+    .occupation-tag { font-size: 12px; color: #f1c40f; font-weight: bold; }
+
+    /* Search Bar */
+    .search-box { width: 100%; max-width: 500px; margin-top: 20px; display: flex; gap: 8px; }
+    .search-box input { flex: 1; background: #1e1f22; border: 1px solid #1f2023; padding: 10px; color: #dbdee1; border-radius: 4px; outline: none; }
+    .search-box button { padding: 10px 16px; border: none; border-radius: 4px; background: #5865f2; color: #fff; font-weight: bold; cursor: pointer; }
+
+    /* Fields */
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group label { font-size: 11px; text-transform: uppercase; color: #b5bac1; font-weight: bold; }
+    .field-group textarea, .field-group input { background: #1e1f22; border: 1px solid #1f2023; padding: 8px; color: #dbdee1; border-radius: 4px; outline: none; font-size: 13px; }
+    .field-group textarea { resize: vertical; min-height: 70px; }
+
+    /* Locked Field Style */
+    .locked-input { background: #18191c !important; color: #949ba4 !important; cursor: not-allowed; border-color: #232428 !important; }
+
+    .save-btn { padding: 10px; border: none; border-radius: 4px; background: #23a55a; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 10px; }
+    .save-btn:hover { background: #1d8a4b; }
+    .error-msg { color: #f23f43; font-size: 14px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <!-- Site Nav -->
+  <div class="site-nav">
+    <a href="windows.html">windows.html</a>
+    <a href="chat.html">chat.html</a>
+    <a href="flash.html">flash.html</a>
+    <a href="eagle188.html">eagle188.html</a>
+    <a href="games.html">games.html</a>
+    <a href="profile.html" style="color:#fff;">profile.html</a>
+  </div>
+
+  <!-- Search Profile Bar -->
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Search username profile...">
+    <button onclick="searchProfile()">Search</button>
+  </div>
+
+  <!-- Profile Card -->
+  <div class="profile-card" id="profile-card">
+    <div id="profile-content">Loading profile...</div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://ijewmtxktfplreizuqnf.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_4gRphMZV4JmvpAslZRnLcQ_owj7V5Ii';
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const DEFAULT_PFP = 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png';
+
+    // Get target user from URL string (?user=Username)
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetUsername = urlParams.get('user');
+
+    // Assume user is logged in locally if session username exists (or prompt for testing)
+    let loggedInUser = localStorage.getItem('chat_user') || null;
+
+    async function loadProfile() {
+      const card = document.getElementById('profile-content');
+
+      // If no user queried, show search prompt or your own profile
+      if (!targetUsername) {
+        if (loggedInUser) {
+          targetUsername = loggedInUser;
+        } else {
+          card.innerHTML = `<div style="text-align:center;">Enter a username in the search bar above to inspect a profile.</div>`;
+          return;
+        }
+      }
+
+      // Fetch user profile from Supabase
+      const { data: profile, error } = await client
+        .from('profiles')
+        .select('*')
+        .eq('username', targetUsername)
+        .single();
+
+      if (error || !profile) {
+        card.innerHTML = `<div class="error-msg">User "${escapeHtml(targetUsername)}" not found.</div>`;
+        return;
+      }
+
+      const isOwner = loggedInUser && loggedInUser === profile.username;
+      const isVerified = Boolean(profile.is_verified);
+
+      // SECURITY RULE: Unverified profiles cannot be viewed by others
+      if (!isVerified && !isOwner) {
+        card.innerHTML = `
+          <div class="profile-header">
+            <img class="avatar" src="${profile.avatar_url || DEFAULT_PFP}">
+            <div class="user-info">
+              <div class="username-title">${escapeHtml(profile.username)} <span class="unverified-badge">UNVERIFIED</span></div>
+            </div>
+          </div>
+          <div class="error-msg" style="margin-top: 15px;">
+            This profile is unverified and cannot be inspected.
+          </div>
+        `;
+        return;
+      }
+
+      // Format periods list
+      const periodsText = Array.isArray(profile.online_periods) ? profile.online_periods.join('\n') : (profile.online_periods || '');
+
+      card.innerHTML = `
+        <div class="profile-header">
+          <img class="avatar" src="${profile.avatar_url || DEFAULT_PFP}">
+          <div class="user-info">
+            <div class="username-title">
+              ${escapeHtml(profile.username)}
+              ${isVerified ? '<span class="verified-badge">✓ VERIFIED</span>' : '<span class="unverified-badge">UNVERIFIED</span>'}
+            </div>
+            <div class="occupation-tag">${escapeHtml(profile.chat_occupation || 'Worker')}</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Bio</label>
+          <textarea id="edit-bio" ${!isOwner ? 'readonly class="locked-input"' : ''}>${escapeHtml(profile.bio || '')}</textarea>
+        </div>
+
+        <div class="field-group">
+          <label>Online Periods Status</label>
+          <textarea id="edit-periods" placeholder="e.g. Period 1: Green&#10;Period 2: Orange" ${!isOwner ? 'readonly class="locked-input"' : ''}>${escapeHtml(periodsText)}</textarea>
+        </div>
+
+        <div class="field-group">
+          <label>Chat Occupation (Locked)</label>
+          <input type="text" value="${escapeHtml(profile.chat_occupation || 'Worker')}" readonly class="locked-input">
+        </div>
+
+        ${isOwner ? `<button class="save-btn" onclick="saveProfile()">Save Changes</button>` : ''}
+      `;
+    }
+
+    async function saveProfile() {
+      if (!loggedInUser || loggedInUser !== targetUsername) return alert("You can only edit your own profile!");
+
+      const bio = document.getElementById('edit-bio').value.trim();
+      const rawPeriods = document.getElementById('edit-periods').value.trim();
+      const periodsArray = rawPeriods ? rawPeriods.split('\n') : [];
+
+      const { error } = await client
+        .from('profiles')
+        .update({
+          bio: bio,
+          online_periods: periodsArray
+        })
+        .eq('username', loggedInUser);
+
+      if (error) {
+        alert("Failed to save profile: " + error.message);
+      } else {
+        alert("Profile saved successfully!");
+        loadProfile();
+      }
+    }
+
+    function searchProfile() {
+      const query = document.getElementById('search-input').value.trim();
+      if (query) {
+        window.location.href = `profile.html?user=${encodeURIComponent(query)}`;
+      }
+    }
+
+    function escapeHtml(text) {
+      return (text || '').replace(/[&<"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
