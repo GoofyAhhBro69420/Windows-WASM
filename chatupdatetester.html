@@ -229,11 +229,16 @@
         nameHTML = `<span class="message-author" style="color: #f2f5f7;">Anonymous</span>`;
       }
 
+// Convert nameHTML into a clickable link to profile.html
+      const profileLink = msg.username 
+        ? `<a href="profile.html?user=${encodeURIComponent(msg.username)}" style="text-decoration: none;">${nameHTML}</a>`
+        : nameHTML;
+
       msgEl.innerHTML = `
         <img class="avatar" src="${pfpUrl}" onerror="this.src='${DEFAULT_PFP}'">
         <div class="message-body">
           <div class="message-header">
-            ${nameHTML}
+            ${profileLink}
             <span class="message-time">${time}</span>
           </div>
           <div class="message-content">${escapeHtml(msg.content)}</div>
