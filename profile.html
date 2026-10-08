@@ -24,6 +24,7 @@
     .verified-badge { font-size: 10px; background: #3498db; color: #fff; border-radius: 3px; padding: 2px 6px; font-weight: bold; }
     .unverified-badge { font-size: 10px; background: #4e5058; color: #dbdee1; border-radius: 3px; padding: 2px 6px; font-weight: bold; }
     .occupation-tag { font-size: 12px; color: #f1c40f; font-weight: bold; }
+    .party-tag { font-size: 11px; color: #9b59b6; font-weight: bold; margin-top: 2px; }
 
     /* Search Bar */
     .search-box { width: 100%; max-width: 500px; margin-top: 20px; display: flex; gap: 8px; }
@@ -33,8 +34,10 @@
     /* Fields */
     .field-group { display: flex; flex-direction: column; gap: 6px; }
     .field-group label { font-size: 11px; text-transform: uppercase; color: #b5bac1; font-weight: bold; }
-    .field-group textarea, .field-group input { background: #1e1f22; border: 1px solid #1f2023; padding: 8px; color: #dbdee1; border-radius: 4px; outline: none; font-size: 13px; }
+    .field-group textarea, .field-group input, .field-group select { background: #1e1f22; border: 1px solid #1f2023; padding: 8px; color: #dbdee1; border-radius: 4px; outline: none; font-size: 13px; }
     .field-group textarea { resize: vertical; min-height: 70px; }
+
+    .field-note { font-size: 10px; color: #949ba4; font-style: italic; }
 
     /* Locked Field Style */
     .locked-input { background: #18191c !important; color: #949ba4 !important; cursor: not-allowed; border-color: #232428 !important; }
@@ -74,17 +77,14 @@
 
     const DEFAULT_PFP = 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png';
 
-    // Get target user from URL string (?user=Username)
     const urlParams = new URLSearchParams(window.location.search);
     let targetUsername = urlParams.get('user');
 
-    // Assume user is logged in locally if session username exists (or prompt for testing)
     let loggedInUser = localStorage.getItem('chat_user') || null;
 
     async function loadProfile() {
       const card = document.getElementById('profile-content');
 
-      // If no user queried, show search prompt or your own profile
       if (!targetUsername) {
         if (loggedInUser) {
           targetUsername = loggedInUser;
@@ -94,7 +94,6 @@
         }
       }
 
-      // Fetch user profile from Supabase
       const { data: profile, error } = await client
         .from('profiles')
         .select('*')
@@ -108,8 +107,8 @@
 
       const isOwner = loggedInUser && loggedInUser === profile.username;
       const isVerified = Boolean(profile.is_verified);
+      const currentParty = profile.political_party || 'Integrationist';
 
-      // SECURITY RULE: Unverified profiles cannot be viewed by others
       if (!isVerified && !isOwner) {
         card.innerHTML = `
           <div class="profile-header">
@@ -125,7 +124,6 @@
         return;
       }
 
-      // Format periods list
       const periodsText = Array.isArray(profile.online_periods) ? profile.online_periods.join('\n') : (profile.online_periods || '');
 
       card.innerHTML = `
@@ -137,7 +135,23 @@
               ${isVerified ? '<span class="verified-badge">✓ VERIFIED</span>' : '<span class="unverified-badge">UNVERIFIED</span>'}
             </div>
             <div class="occupation-tag">${escapeHtml(profile.chat_occupation || 'Worker')}</div>
+            <div class="party-tag">Party: ${escapeHtml(currentParty)}</div>
           </div>
+        </div>
+
+        <div class="field-group">
+          <label>Political Party</label>
+          ${isOwner ? `
+            <select id="edit-party">
+              <option value="Integrationist" ${currentParty === 'Integrationist' ? 'selected' : ''}>Integrationist (Share the chat)</option>
+              <option value="Isolationist" ${currentParty === 'Isolationist' ? 'selected' : ''}>Isolationist (Gatekeep the chat)</option>
+              <option value="Anarchy" ${currentParty === 'Anarchy' ? 'selected' : ''}>Anarchy (Fewer restrictions)</option>
+              <option value="Other" ${currentParty === 'Other' ? 'selected' : ''}>Other (Specify in Bio)</option>
+            </select>
+            <span class="field-note">* If you select "Other", please describe your stance in your Bio below.</span>
+          ` : `
+            <input type="text" value="${escapeHtml(currentParty)}" readonly class="locked-input">
+          `}
         </div>
 
         <div class="field-group">
@@ -162,6 +176,7 @@
     async function saveProfile() {
       if (!loggedInUser || loggedInUser !== targetUsername) return alert("You can only edit your own profile!");
 
+      const party = document.getElementById('edit-party').value;
       const bio = document.getElementById('edit-bio').value.trim();
       const rawPeriods = document.getElementById('edit-periods').value.trim();
       const periodsArray = rawPeriods ? rawPeriods.split('\n') : [];
@@ -169,6 +184,7 @@
       const { error } = await client
         .from('profiles')
         .update({
+          political_party: party,
           bio: bio,
           online_periods: periodsArray
         })
